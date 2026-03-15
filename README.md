@@ -38,13 +38,13 @@ $$[q_{t,1}^R;\, q_{t,2}^R;\, \ldots;\, q_{t,n_h}^R] = q_t^R = \text{RoPE}(W^{QR}
 
 $$[v_{t,1}^C;\, \ldots;\, v_{t,n_h}^C] = v_t^C = W^{UV} c_t^{KV}$$
 
-$$o_{t,i} = \sum_{j=1}^{t} \text{softmax}_j\!\left(\frac{q_{t,i}^{\top} k_{j,i}}{\sqrt{d_h + d_r}}\right) v_{j,i}^C, \qquad y_t = W^O [o_{t,1};\, \ldots;\, o_{t,n_h}]$$
+$$o_{t,i} = \sum_{j=1}^{t} \text{softmax}_j\\!\left(\frac{q_{t,i}^{\top} k_{j,i}}{\sqrt{d_h + d_r}}\right) v_{j,i}^C, \qquad y_t = W^O [o_{t,1};\, \ldots;\, o_{t,n_h}]$$
 
 **(10) — Attention Output (Inference / Absorbed):**
 
 $$\hat{q}_{t,i} = [W_i^{UK\top} q_{t,i}^C;\, q_{t,i}^R], \qquad \hat{k}_j = [c_j^{KV};\, k_j^R]$$
 
-$$\hat{o}_{t,i} = \sum_{j=1}^{t} \text{softmax}_j\!\left(\frac{\hat{q}_{t,i}^{\top} \hat{k}_j}{\sqrt{d_h + d_r}}\right) c_j^{KV}, \qquad y_t = W^O [W_1^{UV} \hat{o}_{t,1};\, \ldots;\, W_{n_h}^{UV} \hat{o}_{t,n_h}]$$
+$$\hat{o}_{t,i} = \sum_{j=1}^{t} \text{softmax}_j\\!\left(\frac{\hat{q}_{t,i}^{\top} \hat{k}_j}{\sqrt{d_h + d_r}}\right) c_j^{KV}, \qquad y_t = W^O [W_1^{UV} \hat{o}_{t,1};\, \ldots;\, W_{n_h}^{UV} \hat{o}_{t,n_h}]$$
 
 ---
 
@@ -54,7 +54,7 @@ $$\hat{o}_{t,i} = \sum_{j=1}^{t} \text{softmax}_j\!\left(\frac{\hat{q}_{t,i}^{\t
 
 RoPE encodes position information by rotating query and key vectors. For $x \in \mathbb{R}^d$ at position $t$:
 
-$$\text{RoPE}(x, t)_i = \begin{cases} x_i \cos(t\theta_j) - x_{i+d/2} \sin(t\theta_j) & \text{if } i < d/2 \\ x_i \cos(t\theta_j) + x_{i-d/2} \sin(t\theta_j) & \text{if } i \geq d/2 \end{cases}$$
+$$\text{RoPE}(x, t)_i = \begin{cases} x_i \cos(t\theta_j) - x_{i+d/2} \sin(t\theta_j) & \text{if } i < d/2 \\\\ x_i \cos(t\theta_j) + x_{i-d/2} \sin(t\theta_j) & \text{if } i \geq d/2 \end{cases}$$
 
 where $\theta_j = 10000^{-2j/d}$.
 
@@ -130,7 +130,7 @@ $$q_t = [q_t^C;\; q_t^R], \quad k_t = [k_t^C;\; k_t^R]$$
 
 **Attention:**
 
-$$o_{t,i} = \sum_{j=1}^{t} \text{softmax}_j\!\left(\frac{q_{t,i}^{\top}\, k_j}{\sqrt{d_h + d_r}}\right) v_j, \quad y_t = W^O [o_{t,1};\, \ldots;\, o_{t,n_h}]$$
+$$o_{t,i} = \sum_{j=1}^{t} \text{softmax}_j\\!\left(\frac{q_{t,i}^{\top}\, k_j}{\sqrt{d_h + d_r}}\right) v_j, \quad y_t = W^O [o_{t,1};\, \ldots;\, o_{t,n_h}]$$
 
 ### Projection Matrix Summary
 
