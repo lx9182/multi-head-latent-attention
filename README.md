@@ -24,27 +24,27 @@ Multi-Head Latent Attention compresses the KV cache into a low-rank **latent rep
 
 **(7) — KV Compression & Keys:**
 
-$$c_t^{KV} = W^{DKV} x_t, \qquad [k_{t,1}^C;\, k_{t,2}^C;\, \ldots;\, k_{t,n_h}^C] = k_t^C = W^{UK} c_t^{KV}$$
+$$c_t^{KV} = W^{DKV} x_t, \qquad [k_{t,1}^C; k_{t,2}^C; \ldots; k_{t,n_h}^C] = k_t^C = W^{UK} c_t^{KV}$$
 
-$$k_t^R = \text{RoPE}(W^{KR} x_t,\, t), \qquad k_{t,i} = [k_{t,i}^C;\, k_t^R]$$
+$$k_t^R = \text{RoPE}(W^{KR} x_t, t), \qquad k_{t,i} = [k_{t,i}^C; k_t^R]$$
 
 **(8) — Query Compression & Queries:**
 
-$$c_t^Q = W^{DQ} x_t, \qquad [q_{t,1}^C;\, q_{t,2}^C;\, \ldots;\, q_{t,n_h}^C] = q_t^C = W^{UQ} c_t^Q$$
+$$c_t^Q = W^{DQ} x_t, \qquad [q_{t,1}^C; q_{t,2}^C; \ldots; q_{t,n_h}^C] = q_t^C = W^{UQ} c_t^Q$$
 
-$$[q_{t,1}^R;\, q_{t,2}^R;\, \ldots;\, q_{t,n_h}^R] = q_t^R = \text{RoPE}(W^{QR} c_t^Q,\, t), \qquad q_{t,i} = [q_{t,i}^C;\, q_{t,i}^R]$$
+$$[q_{t,1}^R; q_{t,2}^R; \ldots; q_{t,n_h}^R] = q_t^R = \text{RoPE}(W^{QR} c_t^Q, t), \qquad q_{t,i} = [q_{t,i}^C; q_{t,i}^R]$$
 
 **(9) — Attention Output (Training):**
 
-$$[v_{t,1}^C;\, \ldots;\, v_{t,n_h}^C] = v_t^C = W^{UV} c_t^{KV}$$
+$$[v_{t,1}^C; \ldots; v_{t,n_h}^C] = v_t^C = W^{UV} c_t^{KV}$$
 
-$$o_{t,i} = \sum_{j=1}^{t} \text{softmax}_j\\!\left(\frac{q_{t,i}^{\top} k_{j,i}}{\sqrt{d_h + d_r}}\right) v_{j,i}^C, \qquad y_t = W^O [o_{t,1};\, \ldots;\, o_{t,n_h}]$$
+$$o_{t,i} = \sum_{j=1}^{t} \text{softmax}_j\\!\left(\frac{q_{t,i}^{\top} k_{j,i}}{\sqrt{d_h + d_r}}\right) v_{j,i}^C, \qquad y_t = W^O [o_{t,1}; \ldots; o_{t,n_h}]$$
 
 **(10) — Attention Output (Inference / Absorbed):**
 
-$$\hat{q}_{t,i} = [W_i^{UK\top} q_{t,i}^C;\, q_{t,i}^R], \qquad \hat{k}_j = [c_j^{KV};\, k_j^R]$$
+$$\hat{q}_{t,i} = [W_i^{UK\top} q_{t,i}^C; q_{t,i}^R], \qquad \hat{k}_j = [c_j^{KV}; k_j^R]$$
 
-$$\hat{o}_{t,i} = \sum_{j=1}^{t} \text{softmax}_j\\!\left(\frac{\hat{q}_{t,i}^{\top} \hat{k}_j}{\sqrt{d_h + d_r}}\right) c_j^{KV}, \qquad y_t = W^O [W_1^{UV} \hat{o}_{t,1};\, \ldots;\, W_{n_h}^{UV} \hat{o}_{t,n_h}]$$
+$$\hat{o}_{t,i} = \sum_{j=1}^{t} \text{softmax}_j\\!\left(\frac{\hat{q}_{t,i}^{\top} \hat{k}_j}{\sqrt{d_h + d_r}}\right) c_j^{KV}, \qquad y_t = W^O [W_1^{UV} \hat{o}_{t,1}; \ldots; W_{n_h}^{UV} \hat{o}_{t,n_h}]$$
 
 ---
 
@@ -87,7 +87,7 @@ Only $c^{KV}$ and $k^R$ are stored. Per-token cache size comparison (fp16):
 |---|---|---|
 | **Cached tensors** | $K \in \mathbb{R}^{T \times n_h d_h}$, $V \in \mathbb{R}^{T \times n_h d_h}$ | $c^{KV} \in \mathbb{R}^{T \times d_c}$, $k^R \in \mathbb{R}^{T \times d_r}$ |
 | **Bytes per token** (fp16) | $4 \times n_h \times d_h$ | $2(d_c + d_r)$ |
-| **Example** ($n_h{=}8,\, d_h{=}64,\, d_c{=}128,\, d_r{=}32$) | 4 096 B | 320 B (**6.4× smaller**) |
+| **Example** ($n_h{=}8, d_h{=}64, d_c{=}128, d_r{=}32$) | 4 096 B | 320 B (**6.4× smaller**) |
 
 ### Implementation
 
@@ -122,7 +122,7 @@ $$c_t^Q = W^{DQ} h_t, \quad q_t^C = W^{UQ} c_t^Q$$
 
 **Decoupled RoPE keys & queries:**
 
-$$q_t^R = \text{RoPE}(W^{QR} c_t^Q,\, t), \quad k_t^R = \text{RoPE}(W^{KR} h_t,\, t)$$
+$$q_t^R = \text{RoPE}(W^{QR} c_t^Q, t), \quad k_t^R = \text{RoPE}(W^{KR} h_t, t)$$
 
 **Full queries & keys (content + RoPE):**
 
@@ -130,7 +130,7 @@ $$q_t = [q_t^C;\; q_t^R], \quad k_t = [k_t^C;\; k_t^R]$$
 
 **Attention:**
 
-$$o_{t,i} = \sum_{j=1}^{t} \text{softmax}_j\\!\left(\frac{q_{t,i}^{\top}\, k_j}{\sqrt{d_h + d_r}}\right) v_j, \quad y_t = W^O [o_{t,1};\, \ldots;\, o_{t,n_h}]$$
+$$o_{t,i} = \sum_{j=1}^{t} \text{softmax}_j\\!\left(\frac{q_{t,i}^{\top} k_j}{\sqrt{d_h + d_r}}\right) v_j, \quad y_t = W^O [o_{t,1}; \ldots; o_{t,n_h}]$$
 
 ### Projection Matrix Summary
 
@@ -178,13 +178,13 @@ To avoid decompressing $c^{KV}$ at inference, the decompression matrices are **f
 
 **Score absorption (QK)** — pre-compute per head $h$:
 
-$$q_h^C \cdot (k_h^C)^\top = c^Q \cdot \underbrace{W_{uq,h}^\top\, W_{uk,h}}_{W_{qk,h}} \cdot (c^{KV})^\top$$
+$$q_h^C \cdot (k_h^C)^\top = c^Q \cdot \underbrace{W_{uq,h}^\top W_{uk,h}}_{W_{qk,h}} \cdot (c^{KV})^\top$$
 
 $$W_{qk,h} \in \mathbb{R}^{d_c' \times d_c} \quad \text{(computed once)}$$
 
 **Value-output absorption (VO)** — pre-compute per head $h$:
 
-$$o_h \cdot W_{o,h}^\top = \text{attn}_h \cdot c^{KV} \cdot \underbrace{W_{uv,h}^\top\, W_{o,h}^\top}_{W_{vo,h}}$$
+$$o_h \cdot W_{o,h}^\top = \text{attn}_h \cdot c^{KV} \cdot \underbrace{W_{uv,h}^\top W_{o,h}^\top}_{W_{vo,h}}$$
 
 $$W_{vo,h} \in \mathbb{R}^{d_c \times d} \quad \text{(computed once)}$$
 
