@@ -12,7 +12,7 @@ Multi-Head Latent Attention compresses the KV cache into a low-rank **latent rep
 
 | Component | Description |
 |---|---|
-| **KV Compression** | Project hidden states to a small latent $c^{KV} \in \mathbb{R}^{d_c}$, then decompress to per-head K & V |
+| **KV Compression** | Project hidden states to a small latent $c^{KV} \in \mathbb{R}^{d_c}$hen decompress to per-head K & V |
 | **Query Compression** | Compress queries to $c^Q \in \mathbb{R}^{d_c'}$ before decompressing per-head |
 | **Decoupled RoPE** | Apply RoPE on a separate low-dimensional projection ($d_r$ dims/head), keeping content K/V position-free |
 | **KV Cache** | Only cache $c^{KV}$ and $k^R$ — orders of magnitude smaller than full KV |
@@ -26,13 +26,13 @@ Multi-Head Latent Attention compresses the KV cache into a low-rank **latent rep
 
 $$c_t^{KV} = W^{DKV} x_t, \qquad [k_{t,1}^C; k_{t,2}^C; \ldots; k_{t,n_h}^C] = k_t^C = W^{UK} c_t^{KV}$$
 
-$$k_t^R = \text{RoPE}(W^{KR} x_t, t), \qquad k_{t,i} = [k_{t,i}^C; k_t^R]$$
+$$k_t^R = \text{RoPE}(W^{KR} x_t), \qquad k_{t,i} = [k_{t,i}^C; k_t^R]$$
 
 **(8) — Query Compression & Queries:**
 
 $$c_t^Q = W^{DQ} x_t, \qquad [q_{t,1}^C; q_{t,2}^C; \ldots; q_{t,n_h}^C] = q_t^C = W^{UQ} c_t^Q$$
 
-$$[q_{t,1}^R; q_{t,2}^R; \ldots; q_{t,n_h}^R] = q_t^R = \text{RoPE}(W^{QR} c_t^Q, t), \qquad q_{t,i} = [q_{t,i}^C; q_{t,i}^R]$$
+$$[q_{t,1}^R; q_{t,2}^R; \ldots; q_{t,n_h}^R] = q_t^R = \text{RoPE}(W^{QR} c_t^Q), \qquad q_{t,i} = [q_{t,i}^C; q_{t,i}^R]$$
 
 **(9) — Attention Output (Training):**
 
@@ -54,7 +54,7 @@ $$\hat{o}_{t,i} = \sum_{j=1}^{t} \text{softmax}_j\\!\left(\frac{\hat{q}_{t,i}^{\
 
 RoPE encodes position information by rotating query and key vectors. For $x \in \mathbb{R}^d$ at position $t$:
 
-$$\text{RoPE}(x, t)_i = \begin{cases} x_i \cos(t\theta_j) - x_{i+d/2} \sin(t\theta_j) & \text{if } i < d/2 \\\\ x_i \cos(t\theta_j) + x_{i-d/2} \sin(t\theta_j) & \text{if } i \geq d/2 \end{cases}$$
+$$\text{RoPE}(x)_i = \begin{cases} x_i \cos(t\theta_j) - x_{i+d/2} \sin(t\theta_j) & \text{if } i < d/2 \\\\ x_i \cos(t\theta_j) + x_{i-d/2} \sin(t\theta_j) & \text{if } i \geq d/2 \end{cases}$$
 
 where $\theta_j = 10000^{-2j/d}$.
 
@@ -67,7 +67,7 @@ In MLA, RoPE is **decoupled**: it operates on a separate low-dimensional project
 inv_freq = 1.0 / (base ** (torch.arange(0, dim, 2).float() / dim))  # [dim/2]
 t = torch.arange(seq_len, device=device, dtype=inv_freq.dtype)
 freqs = torch.outer(t, inv_freq)               # [seq_len, dim/2]
-cos, sin = torch.cat([freqs, freqs], dim=-1).cos(), torch.cat([freqs, freqs], dim=-1).sin()
+cos, sin = torch.cat([freqs, freqs], dim=-1).cos()orch.cat([freqs, freqs], dim=-1).sin()
 
 # Apply rotation
 def apply_rotary_emb(x, cos, sin):
@@ -93,8 +93,8 @@ Only $c^{KV}$ and $k^R$ are stored. Per-token cache size comparison (fp16):
 
 ```python
 # Cache stores only the latent and RoPE keys — never full K/V
-self.c_kv   = None  # [B, T, d_c]   — compressed KV latent
-self.k_rope = None  # [B, T, d_r]   — RoPE keys (shared across heads)
+self.c_kv   = None  # [B, d_c]   — compressed KV latent
+self.k_rope = None  # [B, d_r]   — RoPE keys (shared across heads)
 
 def update(self, new_c_kv, new_k_rope):
     if self.c_kv is None:
@@ -122,7 +122,7 @@ $$c_t^Q = W^{DQ} h_t, \quad q_t^C = W^{UQ} c_t^Q$$
 
 **Decoupled RoPE keys & queries:**
 
-$$q_t^R = \text{RoPE}(W^{QR} c_t^Q, t), \quad k_t^R = \text{RoPE}(W^{KR} h_t, t)$$
+$$q_t^R = \text{RoPE}(W^{QR} c_t^Q), \quad k_t^R = \text{RoPE}(W^{KR} h_t)$$
 
 **Full queries & keys (content + RoPE):**
 
@@ -174,7 +174,7 @@ self.scale = math.sqrt(d_head + d_rope)
 
 ### Formula
 
-To avoid decompressing $c^{KV}$ at inference, the decompression matrices are **fused** into query and output projections.
+To avoid decompressing $c^{KV}$ at inferencehe decompression matrices are **fused** into query and output projections.
 
 **Score absorption (QK)** — pre-compute per head $h$:
 
@@ -210,7 +210,7 @@ scores_content = torch.einsum("bhsc,btc->bhst", qk_latent, c_kv)
 # RoPE scores
 scores_rope = torch.matmul(q_rope, k_rope.unsqueeze(1).expand(-1, n_heads, -1, -1).transpose(-2, -1))
 
-attn = F.softmax((scores_content + scores_rope) / self.scale, dim=-1)  # [B, n_h, S, T]
+attn = F.softmax((scores_content + scores_rope) / self.scale, dim=-1)  # [B, n_h, S]
 
 # Output via W_vo — latent never decompressed
 attn_c = torch.matmul(attn, c_kv.unsqueeze(1).expand(-1, n_heads, -1, -1))  # [B, n_h, S, d_c]
