@@ -12,7 +12,7 @@ Multi-Head Latent Attention compresses the KV cache into a low-rank **latent rep
 
 | Component | Description |
 |---|---|
-| **KV Compression** | Project hidden states to a small latent $c^{KV} \in \mathbb{R}^{d_c}$hen decompress to per-head K & V |
+| **KV Compression** | Project hidden states to a small latent $c^{KV} \in \mathbb{R}^{d_c}$ then decompress to per-head K & V |
 | **Query Compression** | Compress queries to $c^Q \in \mathbb{R}^{d_c'}$ before decompressing per-head |
 | **Decoupled RoPE** | Apply RoPE on a separate low-dimensional projection ($d_r$ dims/head), keeping content K/V position-free |
 | **KV Cache** | Only cache $c^{KV}$ and $k^R$ — orders of magnitude smaller than full KV |
